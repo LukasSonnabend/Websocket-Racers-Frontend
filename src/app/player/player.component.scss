@@ -1,0 +1,106 @@
+body {
+    background-color: #1a1a1a;
+    color: #c0c0c0;
+    font-family: 'Orbitron', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full height of the viewport */
+    overflow: hidden; /* Prevent scrolling */
+  }
+  
+  .cockpit {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1%;
+    border: 3px solid #666;
+    background-color: #333;
+    border-radius: 15px;
+    width: 100vw; /* Full width of the viewport */
+    height: 100vh; /* Full height of the viewport */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    box-sizing: border-box;
+  }
+  
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    height: 100%;
+    flex: 1; /* Flex to take 1 part of the available width */
+  }
+  
+  .player-info p {
+    font-size: 4vh; /* Use viewport height for responsive font size */
+    margin: 0 0 1vh 0;
+    color: #ffcc00;
+  }
+  
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+  }
+  
+  .btn {
+    background-color: #444;
+    color: #fff;
+    padding: 1vh 2vw; /* Use viewport units for responsive padding */
+    border: 2px solid #888;
+    cursor: pointer;
+    font-size: 2.5vh; /* Responsive font size using vh */
+    border-radius: 5px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: background-color 0.3s, transform 0.3s;
+  }
+  
+  .btn:hover {
+    background-color: #555;
+    transform: scale(1.05);
+  }
+  
+  .btn-primary {
+    background-color: #d9534f;
+    border-color: #a94442;
+  }
+  
+  .btn-secondary {
+    background-color: #5bc0de;
+    border-color: #46b8da;
+  }
+  
+  .instrument-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 70%; /* Adjust width to occupy more horizontal space */
+    height: 100%;
+    background-color: #222;
+    border: 3px solid #555;
+    border-radius: 10px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7);
+    box-sizing: border-box;
+    padding: 2%;
+  }
+  
+  .gyroscope-data {
+    text-align: center;
+    font-size: 3vh; /* Larger responsive font size */
+    margin-bottom: 2vh;
+  }
+  
+  canvas {
+    width: 90%; /* Occupy 90% of the instrument panel's width */
+    height: auto; /* Maintain aspect ratio */
+    background-color: #101010;
+    border: 2px solid #444;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+  }
+  

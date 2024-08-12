@@ -1,2 +1,20 @@
-<p>player works!</p>
-<button *ngIf="isConnected" (click)="setReady()" class="btn btn-lg btn-primary">Ready-up</button>
+<div class="cockpit">
+  <div class="header">
+    <div class="player-info">
+      <p>Player: {{ playerName }}</p>
+    </div>
+    <div class="controls">
+      <button *ngIf="isConnected" (click)="setReady()" class="btn btn-primary">Ready-up</button>
+      <button (click)="calibrateGyro()" class="btn btn-secondary">Calibrate Gyro</button>
+    </div>
+  </div>
+  
+  <div class="instrument-panel">
+    <div class="gyroscope-data">
+      <p>Alpha: {{ alpha }}</p>
+      <p>Beta: {{ beta }}</p>
+      <p>Gamma: {{ gamma }}</p>
+    </div>
+    <canvas id="gyroCanvas"></canvas>
+  </div>
+</div>
