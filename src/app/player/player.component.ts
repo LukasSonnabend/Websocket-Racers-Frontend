@@ -7,16 +7,18 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './player.component.html',
-  styleUrl: './player.component.scss'
+  styleUrls: ['./player.component.scss']
 })
 export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
-  playerName: string | null = null;
+  playerName: string | null = "Hubertus Simplex";
   isConnected = false;
   private readonly maxRetries = 5;
   private retryCount = 0;
   private gyroInterval: any;
-  private canvas: HTMLCanvasElement | null = null;
-  private ctx: CanvasRenderingContext2D | null = null;
+  private gyroCanvas: HTMLCanvasElement | null = null;
+  private gyroCtx: CanvasRenderingContext2D | null = null;
+  private airspeedCanvas: HTMLCanvasElement | null = null;
+  private airspeedCtx: CanvasRenderingContext2D | null = null;
 
   alpha: number | null = null;
   beta: number | null = null;
@@ -25,11 +27,15 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private baselineAlpha: number | null = null;
   private baselineBeta: number | null = null;
   private baselineGamma: number | null = null;
-
+  // Variables to store previous smoothed values
+  private smoothedAlpha: number | null = null;
+  private smoothedBeta: number | null = null;
+  private smoothedGamma: number | null = null;
+  
   constructor(private websocketService: WebsocketService) { }
 
   ngOnInit(): void {
-    this.playerName = window.prompt('Please enter your name:', '');
+    this.playerName = window.prompt('Please enter your name:', '') || "Hubertus Simplex";
     if (this.playerName) {
       this.attemptConnection();
       this.checkGyroscope();
@@ -39,8 +45,10 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.canvas = document.getElementById('gyroCanvas') as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext('2d');
+    this.gyroCanvas = document.getElementById('gyroCanvas') as HTMLCanvasElement;
+    this.gyroCtx = this.gyroCanvas.getContext('2d');
+    this.airspeedCanvas = document.getElementById('airspeedCanvas') as HTMLCanvasElement;
+    this.airspeedCtx = this.airspeedCanvas.getContext('2d');
   }
 
   ngOnDestroy(): void {
@@ -68,6 +76,16 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }
     });
+  }
+
+    // Smoothing factor (0 < smoothingFactor < 1)
+    private readonly smoothingFactor = 0.1;
+
+  private applyLowPassFilter(previousValue: number | null, currentValue: number | null): number | null {
+    if (previousValue === null || currentValue === null) {
+      return currentValue;
+    }
+    return previousValue + this.smoothingFactor * (currentValue - previousValue);
   }
 
   private checkGyroscope(): void {
@@ -109,36 +127,72 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
       this.gamma = (this.gamma !== null ? this.gamma - this.baselineGamma : null);
     }
 
-    console.log(`Alpha: ${this.alpha}, Beta: ${this.beta}, Gamma: ${this.gamma}`);
+    // Apply low-pass filter to smooth the readings
+    this.smoothedAlpha = this.applyLowPassFilter(this.smoothedAlpha, this.alpha);
+    this.smoothedBeta = this.applyLowPassFilter(this.smoothedBeta, this.beta);
+    this.smoothedGamma = this.applyLowPassFilter(this.smoothedGamma, this.gamma);
+
+    console.log(`Alpha: ${this.smoothedAlpha}, Beta: ${this.smoothedBeta}, Gamma: ${this.smoothedGamma}`);
     this.drawGyroData();
+    this.drawAirspeedIndicator();
   }
 
   private drawGyroData(): void {
-    if (!this.ctx || !this.canvas) return;
+    if (!this.gyroCtx || !this.gyroCanvas) return;
 
-    const centerX = this.canvas.width / 2;
-    const centerY = this.canvas.height / 2;
+    const centerX = this.gyroCanvas.width / 2;
+    const centerY = this.gyroCanvas.height / 2;
     const horizonY = centerY + (this.gamma ? this.gamma : 0) * 2; // Adjust the multiplier as needed
 
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.gyroCtx.clearRect(0, 0, this.gyroCanvas.width, this.gyroCanvas.height);
 
     // Draw horizon line
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, horizonY);
-    this.ctx.lineTo(this.canvas.width, horizonY);
-    this.ctx.strokeStyle = 'blue';
-    this.ctx.lineWidth = 2;
-    this.ctx.stroke();
+    this.gyroCtx.beginPath();
+    this.gyroCtx.moveTo(0, horizonY);
+    this.gyroCtx.lineTo(this.gyroCanvas.width, horizonY);
+    this.gyroCtx.strokeStyle = 'blue';
+    this.gyroCtx.lineWidth = 2;
+    this.gyroCtx.stroke();
 
     // Draw vertical line
     const verticalX = centerX + (this.beta ? this.beta : 0) * 2; // Adjust the multiplier as needed
-    this.ctx.beginPath();
-    this.ctx.moveTo(verticalX, 0);
-    this.ctx.lineTo(verticalX, this.canvas.height);
-    this.ctx.strokeStyle = 'red';
-    this.ctx.lineWidth = 2;
-    this.ctx.stroke();
-}
+    this.gyroCtx.beginPath();
+    this.gyroCtx.moveTo(verticalX, 0);
+    this.gyroCtx.lineTo(verticalX, this.gyroCanvas.height);
+    this.gyroCtx.strokeStyle = 'red';
+    this.gyroCtx.lineWidth = 2;
+    this.gyroCtx.stroke();
+  }
+
+  private drawAirspeedIndicator(): void {
+    if (!this.airspeedCtx || !this.airspeedCanvas) return;
+
+    const width = this.airspeedCanvas.width;
+    const height = this.airspeedCanvas.height;
+    const centerY = height / 2;
+    const bandHeight = height; // Height of the band
+    const speed = this.alpha ? this.alpha : 0; // Use alpha as a placeholder for speed
+
+    this.airspeedCtx.clearRect(0, 0, width, height);
+
+    // Draw the band
+    this.airspeedCtx.fillStyle = '#444';
+    this.airspeedCtx.fillRect(0, centerY - bandHeight / 2, width, bandHeight);
+
+    // Draw the speed indicator
+    this.airspeedCtx.fillStyle = 'green';
+    this.airspeedCtx.fillRect(0, centerY - 5, width, 10);
+
+    // Draw speed numbers
+    this.airspeedCtx.fillStyle = 'white';
+    this.airspeedCtx.font = '20px Orbitron';
+    this.airspeedCtx.textAlign = 'center';
+    for (let i = -2; i <= 2; i++) {
+      const y = centerY + i * 40;
+      const speedValue = speed + i * 10;
+      this.airspeedCtx.fillText(speedValue.toFixed(0), width / 2, y);
+    }
+  }
 
   calibrateGyro(): void {
     this.baselineAlpha = (this.alpha || 0);
