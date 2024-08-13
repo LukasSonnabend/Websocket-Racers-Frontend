@@ -1,6 +1,8 @@
-import { Component, AfterViewInit, HostListener } from '@angular/core';
+import { Component, AfterViewInit, HostListener, effect, inject } from '@angular/core';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MessageTypes } from '../host/host.component';
+import { WebsocketService } from '../websocket.service';
 
 @Component({
   selector: 'app-race',
@@ -28,6 +30,28 @@ export class RaceComponent implements AfterViewInit {
   private hoverSpeed = 0.15; // Adjust the speed of the hover effect
   private hoverHeight = 0.1; // Adjust the height of the hover effect
 
+  private websocketService = inject(WebsocketService);
+
+  constructor() {
+    // Run the effect within the constructor to ensure it's within the Angular injection context
+    effect(() => {
+      const msg: { type: MessageTypes, message: string } = this.websocketService.getMessages();
+      if (msg?.type) {
+        this.handleMessage(msg);
+      }
+    });
+  }
+  handleMessage(msg: { type: MessageTypes; message: string; }) {
+    //@ts-ignore
+    const { alpha, beta, gamma } = msg.data;
+    // Convert degrees to radians
+    const roll = THREE.MathUtils.degToRad(gamma);
+    const pitch = THREE.MathUtils.degToRad(beta);
+    
+    // Apply roll and pitch to the car
+    this.car.rotation.x = roll;
+    this.car.rotation.z = pitch;
+  }
 
   ngAfterViewInit(): void {
     this.initThreeJS();
@@ -226,3 +250,5 @@ export class RaceComponent implements AfterViewInit {
     }
 }
 }
+
+

@@ -58,7 +58,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private attemptConnection(): void {
-    this.websocketService.connect('ws://localhost:8080').subscribe({
+    this.websocketService.connect('ws://192.168.2.140:8080').subscribe({
       next: () => {
         this.websocketService.registerAsPlayer(this.playerName!);
         this.isConnected = true; // Set connection status to true
@@ -113,7 +113,7 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
   private startGyroscope(): void {
     this.gyroInterval = setInterval(() => {
       window.addEventListener('deviceorientation', this.handleOrientation, { once: true });
-    }, 200);
+    }, 50);
   }
 
   private handleOrientation = (event: DeviceOrientationEvent): void => {
@@ -135,6 +135,18 @@ export class PlayerComponent implements OnInit, OnDestroy, AfterViewInit {
     console.log(`Alpha: ${this.smoothedAlpha}, Beta: ${this.smoothedBeta}, Gamma: ${this.smoothedGamma}`);
     this.drawGyroData();
     this.drawAirspeedIndicator();
+    this.sendControls();
+  }
+
+  private sendControls(): void {
+    this.websocketService.send({
+      type: 'controls',
+      value: {
+        alpha: this.smoothedAlpha,
+        beta: this.smoothedBeta,
+        gamma: this.smoothedGamma
+      }
+    });
   }
 
   private drawGyroData(): void {

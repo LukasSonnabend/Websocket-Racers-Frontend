@@ -4,12 +4,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
 // {"type":"new_client","message":"A new client has connected"}
-enum MessageTypes {
+export enum MessageTypes {
   NewClient = 'new_client',
   ClientDisconnected = 'client_disconnected',
   GameStarted = 'game_started',
   PlayerReady = 'player_ready',
-  GameEnded = 'game_ended'
+  GameEnded = 'game_ended',
+  Controls = 'player_controls'
 }
 
 @Component({
@@ -38,7 +39,7 @@ export class HostComponent implements OnInit {
 
   ngOnInit(): void {
     // Connect to the WebSocket server and register as a host
-    this.websocketService.connect('ws://localhost:8080').subscribe({
+    this.websocketService.connect('ws://192.168.2.140:8080').subscribe({
       next: () => {
         this.websocketService.registerAsHost();
       },
@@ -66,6 +67,8 @@ export class HostComponent implements OnInit {
       case MessageTypes.GameStarted:
         console.log('Game started:', message.data);
         break;
+
+
       case MessageTypes.PlayerReady:
         console.log('Player ready:', message.data);
         const player = this.players.find(p => p.playerId === message.data.playerId);
